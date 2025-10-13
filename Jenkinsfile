@@ -28,7 +28,7 @@ pipeline {
 
                 echo "Wdrażam nową wersję I WYMUSZAM RESTART PODÓW..."
                 // TO JEST KLUCZOWA ZMIANA: Najpierw wgrywamy zmiany, A POTEM rozkazujemy zrestartować deployment.
-                sh 'sudo k3s kubectl apply -f deployment.yaml && sudo k3s kubectl rollout restart deployment/moja-aplikacja-deployment'
+                sh 'k3s kubectl apply -f deployment.yaml && k3s kubectl rollout restart deployment/moja-aplikacja-deployment'
 
                 echo 'Pomyślnie wdrożono!'
                                  
