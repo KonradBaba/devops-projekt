@@ -1,28 +1,25 @@
 pipeline {
     agent any
 
-    stages {
-        // NOWY ETAP, KTÓRY ZAWSZE CZYŚCI WORKSPACE
-        stage('Cleanup Workspace') {
-            steps {
-                echo 'Czyszczę obszar roboczy przed rozpoczęciem...'
-                cleanWs()
-            }
-        }
+    environment {
+        // Zdefiniuj unikalną nazwę obrazu, aby uniknąć konfliktów
+        DOCKER_IMAGE_NAME = "konrad/flask-app:${env.BUILD_NUMBER}"
+    }
 
+    stages {
         stage('Checkout') {
             steps {
+                // Pobranie kodu z repozytorium
                 checkout scm
             }
         }
-
+        
         stage('Build Docker Image') {
             steps {
                 script {
-                    echo "Rozpoczynam budowanie obrazu Docker..."
-                    def imageName = "moja-super-apka:${env.BUILD_NUMBER}"
-                    docker.build(imageName)
-                    echo "Pomyślnie zbudowano obraz: ${imageName}"
+                    // Budowanie obrazu Docker na podstawie Dockerfile w repozytorium
+                    echo "Building Docker image: ${DOCKER_IMAGE_NAME}"
+                    docker.build(DOCKER_IMAGE_NAME, '.')
                 }
             }
         }
@@ -30,14 +27,19 @@ pipeline {
         stage('Deploy to K3s') {
             steps {
                 script {
-                    echo "Aktualizuję plik wdrożenia nowym tagiem: ${env.BUILD_NUMBER}"
-                    sh "sed -i 's|image: moja-super-apka:.*|image: moja-super-apka:${env.BUILD_NUMBER}|' deployment.yaml"
-                    
-                    echo "Wdrażam nową wersję I WYMUSZAM RESTART PODÓW..."
-                    sh 'k3s kubectl apply -f deployment.yaml && k3s kubectl rollout restart deployment/moja-aplikacja-deployment'
-                    
-                    echo 'Pomyślnie wdrożono!'
+                    // Zastosowanie manifestów Kubernetes (deployment i service)
+                    // Pliki te muszą znajdować się w Twoim repozytorium
+                    echo "Deploying to K3s..."
+                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f service.yaml'
                 }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                // Sprzątanie starych obrazów Docker, aby nie zapełnić dysku
+                sh "docker rmi ${DOCKER_IMAGE_NAME}"
             }
         }
     }
