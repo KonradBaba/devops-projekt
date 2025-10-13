@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: moja-aplikacja-deployment
 spec:
-  replicas: 2 # Uruchom 2 instancje naszej aplikacji dla większej niezawodności
+  replicas: 2
   selector:
     matchLabels:
       app: moja-super-apka
@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: moja-super-apka-kontener
-        image: moja-super-apka:3 # Użyj obrazu, który zbudował Jenkins
+        image: moja-super-apka:5
+        # TO JEST KLUCZOWA ZMIANA: Mówi K8s, aby NIGDY nie pobierał obrazu z sieci.
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
@@ -25,10 +26,9 @@ kind: Service
 metadata:
   name: moja-aplikacja-service
 spec:
-  type: NodePort # Wystaw naszą aplikację na zewnątrz klastra
+  type: NodePort
   selector:
     app: moja-super-apka
   ports:
   - port: 5000
     targetPort: 5000
-    # Port, na którym usługa będzie dostępna z zewnątrz, zostanie wybrany automatycznie
